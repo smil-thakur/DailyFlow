@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PreloaderProvider>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <BrowserRouter>
+        <BrowserRouter basename='/DailyFlow'>
           <AuthProvider>
             <Toaster position='top-center'></Toaster>
             <App />

@@ -1,10 +1,8 @@
-import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { usePreloader } from "@/providers/PreloaderProvider"
-import { addUser } from "@/utils/users"
 import { supabase } from "@/utils/supabase"
 import { LucideArrowLeft } from "lucide-react"
 import { useState } from "react"
@@ -16,7 +14,6 @@ const VerifyOTPPage = () => {
     const [otp, setOtp] = useState("");
     const location = useLocation()
     const navigate = useNavigate()
-    const auth = useAuth()
     const email: string = location.state?.email;
 
     const handleOTPInput = (value: string) => {
