@@ -1,69 +1,113 @@
-# React + TypeScript + Vite
+# DayFlow: Team Calendar & Schedule Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DayFlow is a modern, interactive calendar and schedule management app for teams. Built with React, TypeScript, Supabase, and Vite, it empowers organizations to visualize, manage, and optimize employee schedules with ease.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- **Team Calendar View:**
+  - See all team members and their daily statuses in a single, scrollable calendar grid.
+  - Sticky headers and user columns for easy navigation.
+- **Color-Coded Schedules:**
+  - Distinct, accessible colors for Leave, WFH, Extra, Compensation, Office Days, Weekends, and Holidays.
+- **Interactive Scheduling:**
+  - Right-click or tap any cell to set your status (WFH, Leave, Extra, Compensation, or Clear).
+  - Only the current user can edit their own schedule.
+- **Keyboard Navigation:**
+  - Use left/right arrow keys to quickly switch between months.
+- **Authentication:**
+  - Secure login via Supabase (magic link or OTP).
+- **User Management:**
+  - Add yourself to the team, change your display name, and see all team members.
+- **Mobile-Friendly & Responsive:**
+  - Works great on desktop and mobile devices.
+- **GitHub Pages Ready:**
+  - Seamless static deployment with correct routing and asset handling.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🌈 Visual Demo
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+![DayFlow Calendar Screenshot](public/demo.png)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/smil-thakur/DailyFlow.git
+cd DailyFlow
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Environment Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Copy `.env.example` to `.env` and set your Supabase credentials:
+  - `VITE_SUPABASE_URL=...`
+  - `VITE_SUPABASE_ANON_KEY=...`
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 3. Run Locally
+
+```bash
+npm run dev
 ```
+
+### 4. Deploy to GitHub Pages
+
+- Build the app:
+
+```bash
+npm run build
+```
+
+- Deploy using your preferred method (e.g., `gh-pages` branch or GitHub Actions).
+
+---
+
+## 🧩 Tech Stack
+
+- **Frontend:** React 18+, TypeScript, Vite
+- **UI:** shadcn/ui, Tailwind CSS, Lucide Icons
+- **Backend:** Supabase (Auth, Postgres)
+- **Date Logic:** date-fns
+
+---
+
+## 💡 Usage & Impact
+
+- **For Teams:**
+  - Instantly see who is working from home, on leave, or available in the office.
+  - Plan projects and meetings with full visibility of team availability.
+- **For Managers:**
+  - Reduce scheduling conflicts and improve resource planning.
+  - Export or screenshot the calendar for reporting.
+- **For Individuals:**
+  - Quickly update your own status from any device.
+
+---
+
+## 📈 Why DayFlow?
+
+- **Boosts Transparency:** Everyone knows the team's status at a glance.
+- **Saves Time:** No more manual spreadsheets or endless status updates.
+- **Accessible & Modern:** Clean, color-coded UI with keyboard and mobile support.
+- **Open Source:** Easily customizable for your organization’s needs.
+
+---
+
+## 🤝 Contributing
+
+Pull requests and suggestions are welcome! Please open an issue to discuss your ideas or report bugs.
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+> Made with ❤️ by [smil-thakur](https://github.com/smil-thakur) and contributors.
