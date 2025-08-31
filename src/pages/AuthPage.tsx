@@ -20,13 +20,16 @@ const AuthPage = () => {
     }
     preloaderProvider.show()
     try {
-      await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
           emailRedirectTo: undefined
         }
       })
+      if (error) {
+        throw new Error(error.message)
+      }
       preloaderProvider.hide()
       navigate("/verifyOTP", { state: { email: email } })
     } catch (err) {

@@ -1,46 +1,37 @@
+import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { usePreloader } from "@/providers/PreloaderProvider"
-import { supabase } from "@/utils/supabase"
+import { addUserToTeam, verifyTeamKey } from "@/utils/Teams"
 import { LucideArrowLeft } from "lucide-react"
 import { useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
-const VerifyOTPPage = () => {
+const TeamKeyPage = () => {
     const preloaderProvider = usePreloader()
-    const [otp, setOtp] = useState("");
-    const location = useLocation()
+    const [teamKey, setTeamKey] = useState("");
     const navigate = useNavigate()
-    const email: string = location.state?.email;
+    const auth = useAuth()
 
     const handleOTPInput = (value: string) => {
-        setOtp(value)
+        setTeamKey(value)
     }
 
-    const handleVerifyOTP = async () => {
+    const handleVerifyTeamKey = async () => {
         preloaderProvider.show()
         try {
-            const { error } = await supabase.auth.verifyOtp({
-                email,
-                token: otp,
-                type: "email"
-            })
-            if (error) {
-                throw new Error(error.message)
-            }
+            const team_id = await verifyTeamKey(teamKey)
+            await addUserToTeam(team_id, auth.user?.id!);
             preloaderProvider.hide()
-            await supabase.auth.updateUser({
-                data: { displayName: email.split("@")[0] }
-            });
-            navigate("/teamkey")
+            navigate("/home")
 
         } catch (err) {
             preloaderProvider.hide()
             toast.error(
-                "Unable to verify your orp",
+                "Unable to add you in team",
                 {
                     description: `${err}, try again later!`
                 }
@@ -49,7 +40,7 @@ const VerifyOTPPage = () => {
     }
     const handleBack = () => {
 
-        navigate("/auth")
+        navigate("/verifyOTP")
     }
 
     return (
@@ -60,16 +51,16 @@ const VerifyOTPPage = () => {
             <div className="flex items-center">
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    handleVerifyOTP();
+                    handleVerifyTeamKey();
                 }}>
                     <Card className="w-md">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Button type="button" onClick={() => { handleBack() }} variant="outline"><LucideArrowLeft></LucideArrowLeft></Button>
-                                Verify OTP
+                                Team key
                             </CardTitle>
                             <CardDescription>
-                                An OTP has been sent to your previously used email. Please enter the OTP to log in.
+                                A team key has been given by your senior enter the team key to access the calender, or ask your team lead to generate one!
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -88,7 +79,7 @@ const VerifyOTPPage = () => {
                             </InputOTP>
                         </CardContent>
                         <CardFooter>
-                            <Button type="submit">Verify & Login</Button>
+                            <Button type="submit">Let's go</Button>
                         </CardFooter>
                     </Card>
                 </form>
@@ -97,4 +88,4 @@ const VerifyOTPPage = () => {
     )
 }
 
-export default VerifyOTPPage
+export default TeamKeyPage

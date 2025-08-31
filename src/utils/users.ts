@@ -1,6 +1,7 @@
 import type { UserDTO } from "@/Models/user_model";
 import { supabase } from "./supabase";
 import type { Schedule } from "@/Models/schedule_model";
+import { getTeamOfUser } from "./Teams";
 
 export const addUser = async (name: string, team: string, id: string) => {
   const { data: existingUser, error } = await supabase
@@ -104,7 +105,12 @@ export const getAllUsersSchedule = async (
 };
 
 export const getAllUsers = async (): Promise<UserDTO[]> => {
-  const { data, error } = await supabase.from("Users").select("*");
+  const u_id = (await supabase.auth.getUser()).data.user?.id!;
+  const team_id = await getTeamOfUser(u_id);
+  const { data, error } = await supabase
+    .from("Users")
+    .select("*")
+    .eq("team_id", team_id);
   if (error) {
     throw new Error(error.message);
   }

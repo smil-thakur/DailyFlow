@@ -26,6 +26,7 @@ import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRi
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 import { Badge } from "@/components/ui/badge"
+import { getTeamName, getTeamOfUser, isUserInTeam } from "@/utils/Teams";
 
 
 const HomePage = () => {
@@ -33,6 +34,9 @@ const HomePage = () => {
     const preloaderProvider = usePreloader();
     const [users, setUsers] = useState<UserDTO[]>([])
     const [schedules, SetSchedules] = useState<Schedule[]>([])
+    const [inTeam, setInTeam] = useState<boolean>(false);
+    const [teamName, setTeamName] = useState<string>("");
+    const [teamId, setTeamId] = useState<string>("");
 
     const [isAdded, setIsAdded] = useState(false);
     const [showChangeUsername, setShowChangeUsername] = useState(false);
@@ -52,6 +56,28 @@ const HomePage = () => {
             default: return "";
         }
     };
+
+    const getIsInTeam = async () => {
+        try {
+            const isIn = await isUserInTeam(auth.user?.id!)
+            setInTeam(isIn)
+        }
+        catch (err) {
+            toast.error(`${err}`)
+        }
+    }
+
+    const getTeam = async () => {
+        try {
+            const id = await getTeamOfUser(auth.user?.id!)
+            setTeamId(id)
+            const name = await getTeamName(id)
+            setTeamName(name)
+        }
+        catch (err) {
+            toast.error(`${err}`)
+        }
+    }
 
     const handleScroll = () => {
         const today = new Date();
@@ -190,6 +216,8 @@ const HomePage = () => {
     useEffect(() => {
         getUsers();
         getIsAllreadyAdded(auth.user?.id!);
+        getIsInTeam();
+        getTeam();
     }, []);
 
     useEffect(() => {
@@ -219,7 +247,7 @@ const HomePage = () => {
                         <div className="flex items-center gap-4 justify-between w-full lg:justify-start">
                             <div className="flex flex-col">
                                 <div className="text-xl md:text-2xl font-bold">
-                                    Upgrade team's
+                                    {teamName}'s
                                 </div>
                                 <div>
                                     Calender
