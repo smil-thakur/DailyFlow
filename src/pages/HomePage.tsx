@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/auth/AuthContext"
 import { ModeToggle } from "@/components/ui/mode-toggle"
@@ -10,7 +9,17 @@ import {
     subMonths
 } from 'date-fns';
 import { getAllUsersSchedule, clearSchedule } from "@/utils/users";
-import { ChangeUsernameModal } from "@/components/ui/change-username-modal";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { updateUserName } from "@/utils/updateUserName";
 import { addUser } from "@/utils/users";
 import { toast } from "sonner";
@@ -26,7 +35,7 @@ import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRi
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 import { Badge } from "@/components/ui/badge"
-import { getTeamName, getTeamOfUser, isUserInTeam } from "@/utils/Teams";
+import { getTeamName, getTeamOfUser, isUserInTeam, removeUserFromTeam, changeUserTeam, verifyTeamKey, getTeamKeyOfUser } from "@/utils/Teams";
 
 
 const HomePage = () => {
@@ -34,17 +43,52 @@ const HomePage = () => {
     const preloaderProvider = usePreloader();
     const [users, setUsers] = useState<UserDTO[]>([])
     const [schedules, SetSchedules] = useState<Schedule[]>([])
-    const [inTeam, setInTeam] = useState<boolean>(false);
     const [teamName, setTeamName] = useState<string>("");
     const [teamId, setTeamId] = useState<string>("");
 
     const [isAdded, setIsAdded] = useState(false);
     const [showChangeUsername, setShowChangeUsername] = useState(false);
+    const [usernameInput, setUsernameInput] = useState("");
+    const [showLeaveTeam, setShowLeaveTeam] = useState(false);
     const [currentUserName, setCurrentUserName] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
     const days = eachDayOfInterval({ start, end });
+    const [showChangeTeam, setShowChangeTeam] = useState(false);
+    const [newTeamKey, setNewTeamKey] = useState("");
+    const [changeLoading, setChangeLoading] = useState(false);
+    const handleLeaveTeam = async () => {
+        if (!auth.user?.id) return;
+        setChangeLoading(true);
+        try {
+            await removeUserFromTeam(auth.user.id);
+            toast.success("You have left the team.");
+            window.location.reload();
+        } catch (err) {
+            toast.error(`Failed to leave team: ${err}`);
+        } finally {
+            setChangeLoading(false);
+        }
+    };
+
+    const handleChangeTeam = async () => {
+        if (!auth.user?.id || !newTeamKey) return;
+        setChangeLoading(true);
+        try {
+            const newTeamId = await verifyTeamKey(newTeamKey);
+            await changeUserTeam(auth.user.id, newTeamId);
+            toast.success("Team changed successfully!");
+            setShowChangeTeam(false);
+            setNewTeamKey("");
+            window.location.reload();
+        } catch (err) {
+            toast.error(`Failed to change team: ${err}`);
+        } finally {
+            setChangeLoading(false);
+        }
+    };
+
 
     // Improved color palette for better UX and accessibility
     const getScheduleClass = (type: string) => {
@@ -56,16 +100,6 @@ const HomePage = () => {
             default: return "";
         }
     };
-
-    const getIsInTeam = async () => {
-        try {
-            const isIn = await isUserInTeam(auth.user?.id!)
-            setInTeam(isIn)
-        }
-        catch (err) {
-            toast.error(`${err}`)
-        }
-    }
 
     const getTeam = async () => {
         try {
@@ -144,7 +178,6 @@ const HomePage = () => {
             preloaderProvider.show()
             const allUsers = await getAllUsers();
             setUsers(allUsers);
-            console.log(allUsers)
             const me = allUsers.find(u => u.user_id === auth.user?.id);
             if (me) setCurrentUserName(me.name);
             preloaderProvider.hide()
@@ -154,12 +187,14 @@ const HomePage = () => {
             toast(`${err}`)
         }
     }
-    const handleChangeUsername = async (newName: string) => {
+    const handleChangeUsername = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         try {
             if (!auth.user?.id) throw new Error("No user id");
-            await updateUserName(auth.user.id, newName);
+            await updateUserName(auth.user.id, usernameInput);
             await getUsers();
-            toast("Username updated!");
+            toast.success("Username updated!");
+            setShowChangeUsername(false);
         } catch (err) {
             toast.error(`${err}`)
         }
@@ -216,7 +251,6 @@ const HomePage = () => {
     useEffect(() => {
         getUsers();
         getIsAllreadyAdded(auth.user?.id!);
-        getIsInTeam();
         getTeam();
     }, []);
 
@@ -234,12 +268,35 @@ const HomePage = () => {
     }, []);
 
     return <>
-        <ChangeUsernameModal
-            isOpen={showChangeUsername}
-            onClose={() => setShowChangeUsername(false)}
-            onSubmit={handleChangeUsername}
-            initialName={currentUserName}
-        />
+        {/* Change Username Dialog */}
+        <Dialog open={showChangeUsername} onOpenChange={setShowChangeUsername}>
+            <DialogContent className="sm:max-w-[425px]">
+                <form onSubmit={handleChangeUsername}>
+                    <DialogHeader>
+                        <DialogTitle>Change Username</DialogTitle>
+                        <DialogDescription>Update your display name for the team.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <label htmlFor="username" className="text-sm font-medium">Username</label>
+                            <Input
+                                id="username"
+                                value={usernameInput}
+                                onChange={e => setUsernameInput(e.target.value)}
+                                placeholder="Enter new username"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline" type="button">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
         <div className="flex flex-col mt-0 px-[24px] w-full">
             <Card className="mb-4">
                 <CardContent>
@@ -274,15 +331,79 @@ const HomePage = () => {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56" align="start">
                                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => setShowChangeUsername(true)}>
-                                            <LucideUserPen></LucideUserPen>
-                                            Change username
+                                        <DropdownMenuItem onClick={() => {
+                                            setUsernameInput(currentUserName);
+                                            setShowChangeUsername(true);
+                                        }}>
+                                            <LucideUserPen /> Change username
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setShowChangeTeam(true)}>
+                                            <LucideCircleEllipsis /> Change team
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={async () => {
+                                            try {
+                                                const teamKey = await getTeamKeyOfUser(auth.user?.id!);
+                                                await navigator.clipboard.writeText(teamKey);
+                                                toast.success("Team key copied to clipboard!");
+                                            } catch (err) {
+                                                toast.error("No team key found.");
+                                            }
+                                        }}>
+                                            <LucideUser /> Copy team key
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setShowLeaveTeam(true)} disabled={changeLoading}>
+                                            <LucideTrash /> Leave team
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => { auth.signOut() }}>
-                                            <LucideLogOut></LucideLogOut>
-                                            Log out
+                                            <LucideLogOut /> Log out
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
+                                    {/* Change Team Dialog */}
+                                    <Dialog open={showChangeTeam} onOpenChange={setShowChangeTeam}>
+                                        <DialogContent className="sm:max-w-[425px]">
+                                            <form onSubmit={e => { e.preventDefault(); handleChangeTeam(); }}>
+                                                <DialogHeader>
+                                                    <DialogTitle>Change Team</DialogTitle>
+                                                    <DialogDescription>Enter the new team key to join a different team. You will be removed from your current team.</DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-4 py-4">
+                                                    <div className="grid gap-2">
+                                                        <label htmlFor="teamkey" className="text-sm font-medium">Team Key</label>
+                                                        <Input
+                                                            id="teamkey"
+                                                            value={newTeamKey}
+                                                            onChange={e => setNewTeamKey(e.target.value)}
+                                                            placeholder="Enter new team key"
+                                                            required
+                                                            disabled={changeLoading}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline" type="button">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button type="submit" disabled={changeLoading || !newTeamKey}>Change</Button>
+                                                </DialogFooter>
+                                            </form>
+                                        </DialogContent>
+                                    </Dialog>
+
+                                    {/* Leave Team Confirmation Dialog */}
+                                    <Dialog open={showLeaveTeam} onOpenChange={setShowLeaveTeam}>
+                                        <DialogContent className="sm:max-w-[400px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Leave Team</DialogTitle>
+                                                <DialogDescription>Are you sure you want to leave your current team? This action cannot be undone.</DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <DialogClose asChild>
+                                                    <Button variant="outline" type="button">Cancel</Button>
+                                                </DialogClose>
+                                                <Button variant="destructive" onClick={handleLeaveTeam} disabled={changeLoading}>Leave Team</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 </DropdownMenu>
                                 <Button onClick={() => { handleScroll() }} variant="outline"><LucideCalendar></LucideCalendar> Today</Button>
                             </div>

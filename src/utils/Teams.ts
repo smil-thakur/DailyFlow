@@ -1,3 +1,24 @@
+// Remove user from team (set team_id to null)
+export const removeUserFromTeam = async (user_id: string) => {
+  const { error } = await supabase
+    .from("Users")
+    .update({ team_id: null })
+    .eq("user_id", user_id);
+  if (error) {
+    throw new Error(`${error.message}`);
+  }
+};
+
+// Change user's team (set team_id to new team_id)
+export const changeUserTeam = async (user_id: string, team_id: string) => {
+  const { error } = await supabase
+    .from("Users")
+    .update({ team_id })
+    .eq("user_id", user_id);
+  if (error) {
+    throw new Error(`${error.message}`);
+  }
+};
 import { supabase } from "./supabase";
 
 export const verifyTeamKey = async (key: string): Promise<string> => {
@@ -66,4 +87,27 @@ export const addUserToTeam = async (team_id: string, user_id: string) => {
   if (error) {
     throw new Error(`${error.message}`);
   }
+};
+
+export const getTeamKeyOfUser = async (user_id: string): Promise<string> => {
+  const { data, error } = await supabase
+    .from("Users")
+    .select("team_id")
+    .eq("user_id", user_id)
+    .single();
+  if (error) {
+    throw new Error(`${error.message}`);
+  }
+  if (!data || !data.team_id) {
+    throw new Error("User is not in a team");
+  }
+  const { data: teamData, error: teamError } = await supabase
+    .from("Teams")
+    .select("team_key")
+    .eq("team_id", data.team_id)
+    .single();
+  if (teamError) {
+    throw new Error(`${teamError.message}`);
+  }
+  return teamData.team_key;
 };
