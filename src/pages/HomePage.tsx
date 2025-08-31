@@ -17,7 +17,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { updateUserName } from "@/utils/updateUserName";
@@ -35,7 +34,7 @@ import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRi
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 import { Badge } from "@/components/ui/badge"
-import { getTeamName, getTeamOfUser, isUserInTeam, removeUserFromTeam, changeUserTeam, verifyTeamKey, getTeamKeyOfUser } from "@/utils/Teams";
+import { getTeamName, getTeamOfUser, removeUserFromTeam, changeUserTeam, verifyTeamKey, getTeamKeyOfUser } from "@/utils/Teams";
 
 
 const HomePage = () => {
@@ -44,7 +43,6 @@ const HomePage = () => {
     const [users, setUsers] = useState<UserDTO[]>([])
     const [schedules, SetSchedules] = useState<Schedule[]>([])
     const [teamName, setTeamName] = useState<string>("");
-    const [teamId, setTeamId] = useState<string>("");
 
     const [isAdded, setIsAdded] = useState(false);
     const [showChangeUsername, setShowChangeUsername] = useState(false);
@@ -104,7 +102,6 @@ const HomePage = () => {
     const getTeam = async () => {
         try {
             const id = await getTeamOfUser(auth.user?.id!)
-            setTeamId(id)
             const name = await getTeamName(id)
             setTeamName(name)
         }
