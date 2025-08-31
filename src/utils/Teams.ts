@@ -42,11 +42,13 @@ export const isUserInTeam = async (user_id: string): Promise<boolean> => {
     .from("Users")
     .select("team_id")
     .eq("user_id", user_id)
-    .single();
+    .limit(1)
+    .maybeSingle();
+
   if (error) {
     throw new Error(`${error.message}`);
   }
-  const hasTeam = data?.team_id !== null;
+  const hasTeam = data !== null && data?.team_id !== null;
   return hasTeam;
 };
 

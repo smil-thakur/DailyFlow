@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp"
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { usePreloader } from "@/providers/PreloaderProvider"
+import { supabase } from "@/utils/supabase"
 import { addUserToTeam, verifyTeamKey } from "@/utils/Teams"
 import { LucideArrowLeft } from "lucide-react"
 import { useState } from "react"
@@ -43,6 +44,13 @@ const TeamKeyPage = () => {
         navigate("/verifyOTP")
     }
 
+    const handleSignout = async () => {
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+            toast.error(error.message)
+        }
+    }
+
     return (
         <>
             <div className='flex items-center fixed top-0 h-[60px] p-2 w-full'>
@@ -78,7 +86,8 @@ const TeamKeyPage = () => {
                                 </InputOTPGroup>
                             </InputOTP>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="gap-2">
+                            <Button type="button" variant="outline" onClick={() => handleSignout()}>Signout</Button>
                             <Button type="submit">Let's go</Button>
                         </CardFooter>
                     </Card>
