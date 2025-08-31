@@ -17,7 +17,9 @@ import {
     addMonths,
     subMonths
 } from 'date-fns';
-import { getAllUsersSchedule, getNameFromEmail, clearSchedule } from "@/utils/users";
+import { getAllUsersSchedule, clearSchedule } from "@/utils/users";
+import { ChangeUsernameModal } from "@/components/ui/change-username-modal";
+import { updateUserName } from "@/utils/updateUserName";
 import {
     Table,
     TableBody,
@@ -36,7 +38,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import type { ScheduleType } from "@/Models/schedule_type_model";
 import type { Schedule } from "@/Models/schedule_model";
-
+import { isHoliday } from "@/utils/calender";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 
@@ -47,10 +49,31 @@ const HomePage = () => {
     const [schedules, SetSchedules] = useState<Schedule[]>([])
 
     const [isAdded, setIsAdded] = useState(false);
+    const [showChangeUsername, setShowChangeUsername] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
     const days = eachDayOfInterval({ start, end });
+
+    const handleScroll = () => {
+        const today = new Date();
+        if (
+            currentMonth.getFullYear() !== today.getFullYear() ||
+            currentMonth.getMonth() !== today.getMonth()
+        ) {
+            setCurrentMonth(today);
+            return;
+        }
+        const el = document.getElementById("today");
+        if (el) {
+            el.scrollIntoView({
+                behavior: "smooth",
+                inline: "start",
+                block: "nearest"
+            });
+        }
+    };
 
     const getHeaderClass = (day: number) => {
         if (day === 1 || day === 4 || day === 5) {
@@ -69,6 +92,8 @@ const HomePage = () => {
         const id = auth.user?.id
         try {
             await addUser(name!, "upgrade", id!)
+            await getUsers()
+            await getSchedules(start, end);
             toast("Done")
         }
         catch (err) {
@@ -76,39 +101,30 @@ const HomePage = () => {
         }
     }
 
-    const handleScheduleSelection = async (event: ScheduleType | "clear", date: Date) => {
-        console.log(date)
-        if (event === "clear") {
-            try {
-                preloaderProvider.show()
-                await clearSchedule(date)
-                await getSchedules()
-
-                preloaderProvider.hide()
-            } catch (err) {
-                preloaderProvider.hide()
-                toast(`${err}`)
+    const handleScheduleSelection = async (event: ScheduleType | "clear", date: Date, userId: string) => {
+        try {
+            preloaderProvider.show();
+            if (event === "clear") {
+                await clearSchedule(date, userId);
+            } else {
+                await setUserSchedule(event, date, userId);
             }
-        }
-        else {
-            try {
-                preloaderProvider.show()
-                await setUserSchedule(event, date)
-
-                await getSchedules()
-
-                preloaderProvider.hide()
-            } catch (err) {
-                preloaderProvider.hide()
-                toast(`${err}`)
-            }
+            await getSchedules();
+            preloaderProvider.hide();
+        } catch (err) {
+            preloaderProvider.hide();
+            toast(`${err}`);
         }
     }
 
     const getUsers = async () => {
         try {
             preloaderProvider.show()
-            setUsers(await getAllUsers())
+            const allUsers = await getAllUsers();
+            setUsers(allUsers);
+            console.log(allUsers)
+            const me = allUsers.find(u => u.user_id === auth.user?.id);
+            if (me) setCurrentUserName(me.name);
             preloaderProvider.hide()
         }
         catch (err) {
@@ -116,6 +132,16 @@ const HomePage = () => {
             toast(`${err}`)
         }
     }
+    const handleChangeUsername = async (newName: string) => {
+        try {
+            if (!auth.user?.id) throw new Error("No user id");
+            await updateUserName(auth.user.id, newName);
+            await getUsers();
+            toast("Username updated!");
+        } catch (err) {
+            toast.error(`${err}`)
+        }
+    };
 
     const getIsAllreadyAdded = async (id: string) => {
         try {
@@ -161,6 +187,9 @@ const HomePage = () => {
         }
     }
 
+    useEffect(() => {
+        handleScroll()
+    }, [users])
 
     useEffect(() => {
         getUsers();
@@ -181,12 +210,20 @@ const HomePage = () => {
     }, []);
 
     return <>
+        <ChangeUsernameModal
+            isOpen={showChangeUsername}
+            onClose={() => setShowChangeUsername(false)}
+            onSubmit={handleChangeUsername}
+            initialName={currentUserName}
+        />
         <div className='flex items-center fixed top-0 h-[60px] p-2 w-full justify-between'>
             <ModeToggle></ModeToggle>
             <div className="flex items-center gap-2">
-                {getNameFromEmail(auth.user?.email!)}
+                <span>{currentUserName}</span>
+                <Button variant="outline" size="sm" onClick={() => setShowChangeUsername(true)}>Change Username</Button>
                 <Button onClick={() => { auth.signOut() }}>Logout</Button>
                 <Button disabled={isAdded} onClick={() => { handleAddInTeam() }}>Add me</Button>
+                <Button onClick={() => { handleScroll() }} variant="ghost">See today</Button>
             </div>
         </div>
         <div className="main">
@@ -209,22 +246,34 @@ const HomePage = () => {
                                         Name
                                     </TableHead>
                                     {days.map((d) => {
+                                        const isToday = (() => {
+                                            const now = new Date();
+                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                                        })();
+                                        const borderClass = isToday ? "border-4 border-purple-800 font-bold" : "";
                                         return (
-                                            <TableHead key={d.getDate()} className={`${getHeaderClass(d.getDay())}`}>
+                                            <TableHead id={isToday ? "today" : d.getDate().toString()} key={d.getDate()} className={`${getHeaderClass(d.getDay())} ${borderClass}  ${isHoliday(d) ? "bg-red-300" : ""}`}>
                                                 <div className="flex flex-col items-center">
                                                     <div>{weekdayNames[d.getDay()]}</div>
                                                     <div>{d.getDate()}</div>
                                                 </div>
-                                            </TableHead>)
+                                            </TableHead>
+                                        )
                                     })}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {users.map(u => <TableRow key={u.id}>
-                                    <TableCell className="bg-[var(--muted)] sticky left-0">{u.name}</TableCell>
-                                    {days.map(d => (
-                                        <TableCell key={d.getTime()} className="text-center">
-                                            {u.user_id === auth.user!.id ? (
+                                    <TableCell className={`bg-[var(--muted)] sticky left-0`}>{u.name}</TableCell>
+                                    {days.map(d => {
+                                        const isToday = (() => {
+                                            const now = new Date();
+                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                                        })();
+                                        const borderClass = isToday ? "border-4 border-purple-800 font-bold" : "";
+                                        return (
+
+                                            <TableCell key={d.getTime()} className={`text-center ${getHeaderClass(d.getDay())} ${borderClass} ${isHoliday(d) ? "bg-red-300" : ""}`}>
                                                 <ContextMenu>
                                                     <ContextMenuTrigger className="w-full h-full cursor-pointer">
                                                         {(() => {
@@ -233,21 +282,16 @@ const HomePage = () => {
                                                         })()}
                                                     </ContextMenuTrigger>
                                                     <ContextMenuContent>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("wfh", d)}>WFH</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("leave", d)}>Leave</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("compensation", d)}>Compenstation</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("extra", d)}>Extra</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("clear", d)}>Clear</ContextMenuItem>
+                                                        <ContextMenuItem onClick={() => handleScheduleSelection("wfh", d, u.user_id)}>WFH</ContextMenuItem>
+                                                        <ContextMenuItem onClick={() => handleScheduleSelection("leave", d, u.user_id)}>Leave</ContextMenuItem>
+                                                        <ContextMenuItem onClick={() => handleScheduleSelection("compensation", d, u.user_id)}>Compenstation</ContextMenuItem>
+                                                        <ContextMenuItem onClick={() => handleScheduleSelection("extra", d, u.user_id)}>Extra</ContextMenuItem>
+                                                        <ContextMenuItem onClick={() => handleScheduleSelection("clear", d, u.user_id)}>Clear</ContextMenuItem>
                                                     </ContextMenuContent>
                                                 </ContextMenu>
-                                            ) : (
-                                                (() => {
-                                                    const val = getScheduleDisplay(u.user_id, d);
-                                                    return <div className={`h-full w-full rounded ${getScheduleClass(val)}`}>{val}</div>;
-                                                })()
-                                            )}
-                                        </TableCell>
-                                    ))}
+                                            </TableCell>
+                                        );
+                                    })}
                                 </TableRow>)}
                             </TableBody>
                         </Table>

@@ -54,7 +54,7 @@ const VerifyOTPPage = () => {
             <div className='flex items-center fixed top-0 h-[60px] p-2 w-full'>
                 <ModeToggle></ModeToggle>
             </div>
-            <div className="main">
+            <div className="main items-center">
                 <form onSubmit={(e) => {
                     e.preventDefault();
                     handleVerifyOTP();

@@ -39,23 +39,23 @@ export const isAlreadyAdded = async (id: string) => {
   return false;
 };
 
-export const clearSchedule = async (date: Date) => {
+export const clearSchedule = async (date: Date, userId: string) => {
   const d = new Date(
     date.getTime() - date.getTimezoneOffset() * 60000
   ).toISOString();
 
-  const { error } = await supabase.from("Schedules").delete().eq("date", d);
+  const { error } = await supabase.from("Schedules").delete().eq("date", d).eq("user_id", userId);
 
   if (error) {
     throw new Error(`Failed to delete schedule: ${error.message}`);
   }
 };
 
-export const setUserSchedule = async (type: string, d: Date) => {
+export const setUserSchedule = async (type: string, d: Date, userId: string) => {
   const date = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
     .toISOString()
     .split("T")[0];
-  const { error } = await supabase.from("Schedules").insert([{ type, date }]);
+  const { error } = await supabase.from("Schedules").insert([{ type, date, user_id: userId }]);
   if (error) {
     throw new Error(`${error.message}`);
   }
