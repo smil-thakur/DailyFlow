@@ -1,12 +1,4 @@
-const getScheduleClass = (type: string) => {
-    switch (type) {
-        case 'L': return "bg-red-200 text-red-800 font-bold";
-        case 'W': return "bg-blue-200 text-blue-800 font-bold";
-        case 'E': return "bg-yellow-200 text-yellow-800 font-bold";
-        case 'C': return "bg-green-200 text-green-800 font-bold";
-        default: return "";
-    }
-};
+
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/auth/AuthContext"
 import { ModeToggle } from "@/components/ui/mode-toggle"
@@ -20,14 +12,6 @@ import {
 import { getAllUsersSchedule, clearSchedule } from "@/utils/users";
 import { ChangeUsernameModal } from "@/components/ui/change-username-modal";
 import { updateUserName } from "@/utils/updateUserName";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { addUser } from "@/utils/users";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -35,11 +19,13 @@ import { getAllUsers, setUserSchedule, isAlreadyAdded } from "@/utils/users";
 import type { UserDTO } from "@/Models/user_model";
 import { usePreloader } from "@/providers/PreloaderProvider";
 import { Card, CardContent } from "@/components/ui/card";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import type { ScheduleType } from "@/Models/schedule_type_model";
 import type { Schedule } from "@/Models/schedule_model";
 import { isHoliday } from "@/utils/calender";
+import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRight, LucideCircleEllipsis, LucideHouse, LucideLogOut, LucideTrash, LucideUser, LucideUserPen, LucideUserX } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+import { Badge } from "@/components/ui/badge"
 
 
 const HomePage = () => {
@@ -55,6 +41,17 @@ const HomePage = () => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
     const days = eachDayOfInterval({ start, end });
+
+    // Improved color palette for better UX and accessibility
+    const getScheduleClass = (type: string) => {
+        switch (type) {
+            case 'L': return "bg-rose-100 text-rose-700 font-bold border-r border-rose-200"; // Leave
+            case 'W': return "bg-sky-100 text-sky-700 font-bold border-r border-sky-200"; // WFH
+            case 'E': return "bg-teal-100 text-teal-700 font-bold border-r border-teal-200"; // Extra (teal)
+            case 'C': return "bg-purple-100 text-purple-700 font-bold border-r border-purple-200"; // Compensation (purple)
+            default: return "";
+        }
+    };
 
     const handleScroll = () => {
         const today = new Date();
@@ -75,17 +72,16 @@ const HomePage = () => {
         }
     };
 
+    // Office days: Mon, Thu, Fri (1, 4, 5) - yellow; Weekends: Sun, Sat (0, 6) - indigo; Default: gray
     const getHeaderClass = (day: number) => {
         if (day === 1 || day === 4 || day === 5) {
-            return "bg-blue-300 text-black"
+            return "bg-amber-100 text-amber-900 font-semibold"; // Office days (yellow)
+        } else if (day === 0 || day === 6) {
+            return "bg-indigo-100 text-indigo-800 font-semibold"; // Weekends (indigo)
+        } else {
+            return "bg-gray-50 text-gray-700";
         }
-        else if (day === 0 || day === 6) {
-            return "bg-green-300 text-black"
-        }
-        else {
-            return "";
-        }
-    }
+    };
 
     const handleAddInTeam = async () => {
         const name = auth.user?.email?.split("@")[0]
@@ -216,87 +212,155 @@ const HomePage = () => {
             onSubmit={handleChangeUsername}
             initialName={currentUserName}
         />
-        <div className='flex items-center fixed top-0 h-[60px] p-2 w-full justify-between'>
-            <ModeToggle></ModeToggle>
-            <div className="flex items-center gap-2">
-                <span>{currentUserName}</span>
-                <Button variant="outline" size="sm" onClick={() => setShowChangeUsername(true)}>Change Username</Button>
-                <Button onClick={() => { auth.signOut() }}>Logout</Button>
-                <Button disabled={isAdded} onClick={() => { handleAddInTeam() }}>Add me</Button>
-                <Button onClick={() => { handleScroll() }} variant="ghost">See today</Button>
-            </div>
-        </div>
-        <div className="main">
-            <div className="w-5xl">
-                <Card>
-                    <CardContent className="overflow-auto ">
-                        <div className="flex justify-between items-center mb-2">
-                            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}>
-                                &lt;
-                            </Button>
-                            <span className="font-semibold text-lg">{start.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}>
-                                &gt;
-                            </Button>
+        <div className="flex flex-col mt-0 px-[24px] w-full">
+            <Card className="mb-4">
+                <CardContent>
+                    <div className="flex items-center flex-col gap-4 lg:flex-row lg:justify-between">
+                        <div className="flex items-center gap-4 justify-between w-full lg:justify-start">
+                            <div className="flex flex-col">
+                                <div className="text-xl md:text-2xl font-bold">
+                                    Upgrade team's
+                                </div>
+                                <div>
+                                    Calender
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center border rounded-xl p-2 bg-muted">
+                                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}>
+                                    <LucideChevronLeft></LucideChevronLeft>
+                                </Button>
+                                <span className="mx-2">{start.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+                                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}>
+                                    <LucideChevronRight></LucideChevronRight>
+                                </Button>
+                            </div>
                         </div>
-                        <Table className="mb-5">
-                            <TableHeader >
-                                <TableRow>
-                                    <TableHead className="bg-[var(--muted)] w-[100px] sticky left-0">
-                                        Name
-                                    </TableHead>
-                                    {days.map((d) => {
-                                        const isToday = (() => {
-                                            const now = new Date();
-                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                                        })();
-                                        const borderClass = isToday ? "border-4 border-purple-800 font-bold" : "";
-                                        return (
-                                            <TableHead id={isToday ? "today" : d.getDate().toString()} key={d.getDate()} className={`${getHeaderClass(d.getDay())} ${borderClass}  ${isHoliday(d) ? "bg-red-300" : ""}`}>
-                                                <div className="flex flex-col items-center">
-                                                    <div>{weekdayNames[d.getDay()]}</div>
-                                                    <div>{d.getDate()}</div>
-                                                </div>
-                                            </TableHead>
-                                        )
-                                    })}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.map(u => <TableRow key={u.id}>
-                                    <TableCell className={`bg-[var(--muted)] sticky left-0`}>{u.name}</TableCell>
-                                    {days.map(d => {
-                                        const isToday = (() => {
-                                            const now = new Date();
-                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                                        })();
-                                        const borderClass = isToday ? "border-4 border-purple-800 font-bold" : "";
-                                        return (
+                        <div className="flex items-center gap-4 flex-col sm:flex-row">
+                            <div className="flex items-center gap-4">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline">
+                                            <LucideUser></LucideUser>
+                                            {currentUserName}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56" align="start">
+                                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => setShowChangeUsername(true)}>
+                                            <LucideUserPen></LucideUserPen>
+                                            Change username
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { auth.signOut() }}>
+                                            <LucideLogOut></LucideLogOut>
+                                            Log out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <Button onClick={() => { handleScroll() }} variant="outline"><LucideCalendar></LucideCalendar> Today</Button>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <ModeToggle></ModeToggle>
+                                <Button style={{ "display": isAdded ? "none" : "block" }} disabled={isAdded} onClick={() => { handleAddInTeam() }}>Add me</Button>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card id="legends" className="mb-4">
+                <CardContent>
+                    <div className="flex flex-col gap-2">
+                        <div>
+                            Legends
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className="bg-rose-100 text-rose-700 border border-rose-200 font-bold">L - Leave</Badge>
+                            <Badge className="bg-sky-100 text-sky-700 border border-sky-200 font-bold">W - WFH</Badge>
+                            <Badge className="bg-teal-100 text-teal-700 border border-teal-200 font-bold">E - Extra</Badge>
+                            <Badge className="bg-purple-100 text-purple-700 border border-purple-200 font-bold">C - Compensation</Badge>
+                            <Badge className="bg-indigo-100 text-indigo-800 border border-indigo-200 font-semibold">SAT/SUN</Badge>
+                            <Badge className="bg-amber-100 text-amber-900 border border-amber-200 font-semibold">Office day</Badge>
+                            <Badge className="bg-pink-200 text-pink-900 border border-pink-300 font-bold">Office Holiday</Badge>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+            <div className="border rounded-xl overflow-hidden mb-10">
+                <div className="overflow-x-auto">
+                    <div className="min-w-fit">
+                        <div id="header" className="flex">
+                            <div className="sticky left-0 z-20 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm">
+                                Team Member
+                            </div>
+                            {days.map(d => {
+                                const isToday = (() => {
+                                    const now = new Date();
+                                    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                                })();
+                                const borderClass = isToday ? "border-l-2 border-b-2 border-r-2 border-purple-800 font-bold" : "";
 
-                                            <TableCell key={d.getTime()} className={`text-center ${getHeaderClass(d.getDay())} ${borderClass} ${isHoliday(d) ? "bg-red-300" : ""}`}>
-                                                <ContextMenu>
-                                                    <ContextMenuTrigger className="w-full h-full cursor-pointer">
-                                                        {(() => {
-                                                            const val = getScheduleDisplay(u.user_id, d);
-                                                            return <div className={`h-full w-full rounded ${getScheduleClass(val)}`}>{val}</div>;
-                                                        })()}
-                                                    </ContextMenuTrigger>
-                                                    <ContextMenuContent>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("wfh", d, u.user_id)}>WFH</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("leave", d, u.user_id)}>Leave</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("compensation", d, u.user_id)}>Compenstation</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("extra", d, u.user_id)}>Extra</ContextMenuItem>
-                                                        <ContextMenuItem onClick={() => handleScheduleSelection("clear", d, u.user_id)}>Clear</ContextMenuItem>
-                                                    </ContextMenuContent>
-                                                </ContextMenu>
-                                            </TableCell>
+                                return (
+                                    <div
+                                        key={d.toISOString()}
+                                        className={`flex border-r border-b ${borderClass} ${getHeaderClass(d.getDay())} ${isHoliday(d) ? "bg-pink-200 text-pink-900 font-bold" : ""} flex-col items-center w-[40px] justify-center shrink-0`}
+                                    >
+                                        <div className="font-semibold text-xs">{d.getDate()}</div>
+                                        <div className="text-xs">{weekdayNames[d.getDay()]}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div id="body">
+                            {users.map(u => (
+                                <div key={u.user_id} className="flex">
+                                    <div className="sticky left-0 z-10 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm">
+                                        {u.name}
+                                    </div>
+                                    {days.map(d => {
+                                        const val = getScheduleDisplay(u.user_id, d);
+                                        const isToday = (() => {
+                                            const now = new Date();
+                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                                        })();
+                                        const borderClass = isToday ? "border-l-2 border-b-2 border-r-2 border-purple-800 font-bold" : "";
+
+                                        return (
+                                            <div
+                                                key={d.toISOString()}
+                                                className={`flex border-r border-b ${getScheduleClass(val)} ${borderClass} ${getHeaderClass(d.getDay())} ${isHoliday(d) ? "bg-pink-200 text-pink-900 font-bold" : ""} flex-col items-center w-[40px] justify-center`}
+                                            >
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-full rounded-none w-[40px]">
+                                                            {val}
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent className="w-56" align="start">
+                                                        <DropdownMenuLabel>My Status</DropdownMenuLabel>
+                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("wfh", d, u.user_id)}>
+                                                            <LucideHouse /> WFH
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("leave", d, u.user_id)}>
+                                                            <LucideUserX /> Leave
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("compensation", d, u.user_id)}>
+                                                            <LucideCalendarCheck /> Compensation
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("extra", d, u.user_id)}>
+                                                            <LucideCircleEllipsis /> Extra
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("clear", d, u.user_id)}>
+                                                            <LucideTrash /> Clear
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
                                         );
                                     })}
-                                </TableRow>)}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
