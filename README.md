@@ -12,6 +12,9 @@ DayFlow is a modern, interactive calendar and schedule management app for teams.
 - **Team Management with Team Keys:**
   - Join teams using a unique team key.
   - Users can change their team by entering a new team key, or remove themselves from their current team at any time.
+- **Create Team & Automatic User Addition:**
+  - Instantly create a new team with a unique name and key.
+  - When a team is created, the user is automatically added to the team and the users database.
 - **Color-Coded Schedules:**
   - Distinct, accessible colors for Leave, WFH, Extra, Compensation, Office Days, Weekends, and Holidays.
 - **Interactive Scheduling:**
