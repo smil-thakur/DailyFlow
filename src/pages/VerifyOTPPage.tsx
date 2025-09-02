@@ -62,7 +62,7 @@ const VerifyOTPPage = () => {
                     e.preventDefault();
                     handleVerifyOTP();
                 }}>
-                    <Card className="w-md">
+                    <Card className="w-sm sm:w-md">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Button type="button" onClick={() => { handleBack() }} variant="outline"><LucideArrowLeft></LucideArrowLeft></Button>

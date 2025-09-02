@@ -67,7 +67,7 @@ const AuthPage = () => {
           e.preventDefault()
           handleLogin()
         }}>
-          <Card className="w-md">
+          <Card className="w-sm sm:w-md">
             <CardHeader>
               <CardTitle>Login to DailyFlow</CardTitle>
               <CardDescription>Dailyflow manages teammates' schedules, including their leaves, work-from-home days, and compensations.</CardDescription>

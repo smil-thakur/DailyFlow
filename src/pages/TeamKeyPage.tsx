@@ -96,7 +96,7 @@ const TeamKeyPage = () => {
                     e.preventDefault();
                     handleVerifyTeamKey();
                 }}>
-                    <Card className="w-md">
+                    <Card className="w-sm sm:w-md">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Button type="button" onClick={() => { handleBack() }} variant="outline"><LucideArrowLeft></LucideArrowLeft></Button>
@@ -125,9 +125,7 @@ const TeamKeyPage = () => {
                             <div className="flex gap-2 w-full">
                                 <Button type="button" variant="outline" onClick={() => handleSignout()}>Signout</Button>
                                 <Button type="submit">Let's go</Button>
-                            </div>
-                            <div className="w-full flex flex-col items-center">
-                                <Button type="button" variant="ghost" className="w-full" onClick={() => setShowCreate(true)}>
+                                <Button type="button" variant="ghost" className="shrink-0" onClick={() => setShowCreate(true)}>
                                     Create a new team
                                 </Button>
                             </div>
