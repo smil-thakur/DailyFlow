@@ -113,3 +113,19 @@ export const getTeamKeyOfUser = async (user_id: string): Promise<string> => {
   }
   return teamData.team_key;
 };
+
+export const createTeam = async (
+  team_name: string
+): Promise<{ team_id: string; team_key: string }> => {
+  // Generate a random 6-digit team key
+  const team_key = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const { data, error } = await supabase
+    .from("Teams")
+    .insert([{ team_name, team_key }])
+    .select("team_id, team_key")
+    .single();
+  if (error) {
+    throw new Error(`${error.message}`);
+  }
+  return { team_id: data.team_id, team_key: data.team_key };
+};

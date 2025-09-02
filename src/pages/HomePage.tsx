@@ -20,10 +20,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { updateUserName } from "@/utils/updateUserName";
-import { addUser } from "@/utils/users";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { getAllUsers, setUserSchedule, isAlreadyAdded } from "@/utils/users";
+import { getAllUsers, setUserSchedule } from "@/utils/users";
 import type { UserDTO } from "@/Models/user_model";
 import { usePreloader } from "@/providers/PreloaderProvider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,7 +43,6 @@ const HomePage = () => {
     const [schedules, SetSchedules] = useState<Schedule[]>([])
     const [teamName, setTeamName] = useState<string>("");
 
-    const [isAdded, setIsAdded] = useState(false);
     const [showChangeUsername, setShowChangeUsername] = useState(false);
     const [usernameInput, setUsernameInput] = useState("");
     const [showLeaveTeam, setShowLeaveTeam] = useState(false);
@@ -140,20 +138,6 @@ const HomePage = () => {
         }
     };
 
-    const handleAddInTeam = async () => {
-        const name = auth.user?.email?.split("@")[0]
-        const id = auth.user?.id
-        try {
-            await addUser(name!, "upgrade", id!)
-            await getUsers()
-            await getSchedules(start, end);
-            toast("Done")
-        }
-        catch (err) {
-            toast(`${err}`)
-        }
-    }
-
     const handleScheduleSelection = async (event: ScheduleType | "clear", date: Date, userId: string) => {
         try {
             preloaderProvider.show();
@@ -197,18 +181,6 @@ const HomePage = () => {
         }
     };
 
-    const getIsAllreadyAdded = async (id: string) => {
-        try {
-            const isAdded = await isAlreadyAdded(id)
-            setIsAdded(isAdded)
-            preloaderProvider.hide()
-        }
-        catch (err) {
-            preloaderProvider.hide()
-            toast(`${err}`)
-        }
-    }
-
     const getSchedules = async (rangeStart = start, rangeEnd = end) => {
         try {
             preloaderProvider.show()
@@ -247,7 +219,6 @@ const HomePage = () => {
 
     useEffect(() => {
         getUsers();
-        getIsAllreadyAdded(auth.user?.id!);
         getTeam();
     }, []);
 
@@ -406,7 +377,6 @@ const HomePage = () => {
                             </div>
                             <div className="flex items-center gap-4">
                                 <ModeToggle></ModeToggle>
-                                <Button style={{ "display": isAdded ? "none" : "block" }} disabled={isAdded} onClick={() => { handleAddInTeam() }}>Add me</Button>
                             </div>
                         </div>
                     </div>
@@ -458,7 +428,7 @@ const HomePage = () => {
                         <div id="body">
                             {users.map(u => (
                                 <div key={u.user_id} className="flex">
-                                    <div className="sticky left-0 z-10 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm">
+                                    <div className="sticky left-0 z-10 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm overflow-hidden text-ellipsis whitespace-nowrap wrap-anywhere">
                                         {u.name}
                                     </div>
                                     {days.map(d => {

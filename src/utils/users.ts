@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import type { Schedule } from "@/Models/schedule_model";
 import { getTeamOfUser } from "./Teams";
 
-export const addUser = async (name: string, team: string, id: string) => {
+export const addUser = async (name: string, team_id: string, id: string) => {
   const { data: existingUser, error } = await supabase
     .from("Users")
     .select("id")
@@ -15,7 +15,7 @@ export const addUser = async (name: string, team: string, id: string) => {
   }
 
   if (existingUser && existingUser.length === 0) {
-    const { error } = await supabase.from("Users").insert([{ name, team }]);
+    const { error } = await supabase.from("Users").insert([{ name, team_id }]);
 
     if (error) {
       throw new Error(`Error inserting schedule: ${error.message}`);
