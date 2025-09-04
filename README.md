@@ -1,6 +1,6 @@
-# DayFlow: Team Calendar & Schedule Manager
+# DailyFlow: Team Calendar & Schedule Manager
 
-DayFlow is a modern, interactive calendar and schedule management app for teams. Built with React, TypeScript, Supabase, and Vite, it empowers organizations to visualize, manage, and optimize employee schedules with ease.
+DailyFlow is a modern, interactive calendar and schedule management app for teams. Built with React, TypeScript, Supabase, and Vite, it empowers organizations to visualize, manage, and optimize employee schedules with ease.
 
 ---
 
@@ -95,7 +95,7 @@ npm run build
 
 ---
 
-## 📈 Why DayFlow?
+## 📈 Why DailyFlow?
 
 - **Boosts Transparency:** Everyone knows the team's status at a glance.
 - **Saves Time:** No more manual spreadsheets or endless status updates.
