@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { updateUserName } from "@/utils/updateUserName";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAllUsers, setUserSchedule } from "@/utils/users";
 import type { UserDTO } from "@/Models/user_model";
 import { usePreloader } from "@/providers/PreloaderProvider";
@@ -46,6 +46,7 @@ const HomePage = () => {
     const [showChangeUsername, setShowChangeUsername] = useState(false);
     const [usernameInput, setUsernameInput] = useState("");
     const [showLeaveTeam, setShowLeaveTeam] = useState(false);
+    const loginUserId = useRef<string|null>(null);
     const [currentUserName, setCurrentUserName] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const start = startOfMonth(currentMonth);
@@ -160,7 +161,10 @@ const HomePage = () => {
             const allUsers = await getAllUsers();
             setUsers(allUsers);
             const me = allUsers.find(u => u.user_id === auth.user?.id);
-            if (me) setCurrentUserName(me.name);
+            if (me) {
+                setCurrentUserName(me.name);
+                loginUserId.current = me.id;
+            }
             preloaderProvider.hide()
         }
         catch (err) {
@@ -234,6 +238,55 @@ const HomePage = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
+
+    function UserRow({user}: {user: UserDTO}) {
+        return <div className="flex">
+            <div className="sticky left-0 z-10 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm overflow-hidden text-ellipsis whitespace-nowrap wrap-anywhere">
+                {user.name}
+            </div>
+            {days.map(d => {
+                const val = getScheduleDisplay(user.user_id, d);
+                const isToday = (() => {
+                    const now = new Date();
+                    return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                })();
+                const borderClass = isToday ? "border-l-2 border-b-2 border-r-2 border-purple-800 font-bold" : "";
+
+                return (
+                    <div
+                        key={d.toISOString()}
+                        className={`flex border-r border-b ${getScheduleClass(val)} ${borderClass} ${getHeaderClass(d.getDay())} ${isHoliday(d) ? "bg-pink-200 text-pink-900 font-bold" : ""} flex-col items-center w-[40px] justify-center`}
+                    >
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-full rounded-none w-[40px]">
+                                    {val}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56" align="start">
+                                <DropdownMenuLabel>My Status</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("wfh", d, user.user_id)}>
+                                    <LucideHouse /> WFH
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("leave", d, user.user_id)}>
+                                    <LucideUserX /> Leave
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("compensation", d, user.user_id)}>
+                                    <LucideCalendarCheck /> Compensation
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("extra", d, user.user_id)}>
+                                    <LucideCircleEllipsis /> Extra
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("clear", d, user.user_id)}>
+                                    <LucideTrash /> Clear
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            })}
+        </div>
+    }
 
     return <>
         {/* Change Username Dialog */}
@@ -426,53 +479,11 @@ const HomePage = () => {
                             })}
                         </div>
                         <div id="body">
-                            {users.map(u => (
-                                <div key={u.user_id} className="flex">
-                                    <div className="sticky left-0 z-10 w-[150px] shrink-0 p-2 md:p-4 font-semibold text-center border-b border-r border-border/50 bg-card text-xs md:text-sm overflow-hidden text-ellipsis whitespace-nowrap wrap-anywhere">
-                                        {u.name}
-                                    </div>
-                                    {days.map(d => {
-                                        const val = getScheduleDisplay(u.user_id, d);
-                                        const isToday = (() => {
-                                            const now = new Date();
-                                            return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                                        })();
-                                        const borderClass = isToday ? "border-l-2 border-b-2 border-r-2 border-purple-800 font-bold" : "";
-
-                                        return (
-                                            <div
-                                                key={d.toISOString()}
-                                                className={`flex border-r border-b ${getScheduleClass(val)} ${borderClass} ${getHeaderClass(d.getDay())} ${isHoliday(d) ? "bg-pink-200 text-pink-900 font-bold" : ""} flex-col items-center w-[40px] justify-center`}
-                                            >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-full rounded-none w-[40px]">
-                                                            {val}
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent className="w-56" align="start">
-                                                        <DropdownMenuLabel>My Status</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("wfh", d, u.user_id)}>
-                                                            <LucideHouse /> WFH
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("leave", d, u.user_id)}>
-                                                            <LucideUserX /> Leave
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("compensation", d, u.user_id)}>
-                                                            <LucideCalendarCheck /> Compensation
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("extra", d, u.user_id)}>
-                                                            <LucideCircleEllipsis /> Extra
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleScheduleSelection("clear", d, u.user_id)}>
-                                                            <LucideTrash /> Clear
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                            {users.filter(u => u.id === loginUserId.current).map(u => (
+                                <UserRow key={u.user_id} user={u} />
+                            ))}
+                            {users.filter(u => u.id !== loginUserId.current).map(u => (
+                                <UserRow key={u.user_id} user={u} />
                             ))}
                         </div>
                     </div>
