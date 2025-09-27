@@ -29,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { ScheduleType } from "@/Models/schedule_type_model";
 import type { Schedule } from "@/Models/schedule_model";
 import { isHoliday } from "@/utils/calender";
-import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRight, LucideCircleEllipsis, LucideHouse, LucideLogOut, LucideTrash, LucideUser, LucideUserPen, LucideUserX } from "lucide-react";
+import { LucideCalendar, LucideCalendarCheck, LucideChevronLeft, LucideChevronRight, LucideCircleEllipsis, LucideClock6, LucideHouse, LucideLogOut, LucideTrash, LucideUser, LucideUserPen, LucideUserX } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 import { Badge } from "@/components/ui/badge"
@@ -94,6 +94,7 @@ const HomePage = () => {
             case 'W': return "bg-sky-100 text-sky-700 font-bold border-r border-sky-200"; // WFH
             case 'E': return "bg-teal-100 text-teal-700 font-bold border-r border-teal-200"; // Extra (teal)
             case 'C': return "bg-purple-100 text-purple-700 font-bold border-r border-purple-200"; // Compensation (purple)
+            case 'HD': return "bg-orange-100 text-orange-700 font-bold border-r border-orange-200"; // Half Day
             default: return "";
         }
     };
@@ -213,6 +214,7 @@ const HomePage = () => {
             case 'leave': return 'L';
             case 'extra': return 'E';
             case 'compensation': return 'C';
+            case 'halfday': return 'HD';
             default: return '-';
         }
     }
@@ -270,6 +272,9 @@ const HomePage = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleScheduleSelection("leave", d, user.user_id)}>
                                     <LucideUserX /> Leave
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleScheduleSelection("halfday", d, user.user_id)}>
+                                    <LucideClock6 /> Half Day
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleScheduleSelection("compensation", d, user.user_id)}>
                                     <LucideCalendarCheck /> Compensation
@@ -444,6 +449,7 @@ const HomePage = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                             <Badge className="bg-rose-100 text-rose-700 border border-rose-200 font-bold">L - Leave</Badge>
                             <Badge className="bg-sky-100 text-sky-700 border border-sky-200 font-bold">W - WFH</Badge>
+                            <Badge className="bg-orange-100 text-orange-700 border border-orange-200 font-bold">HD - Half Day</Badge>
                             <Badge className="bg-teal-100 text-teal-700 border border-teal-200 font-bold">E - Extra</Badge>
                             <Badge className="bg-purple-100 text-purple-700 border border-purple-200 font-bold">C - Compensation</Badge>
                             <Badge className="bg-indigo-100 text-indigo-800 border border-indigo-200 font-semibold">SAT/SUN</Badge>
