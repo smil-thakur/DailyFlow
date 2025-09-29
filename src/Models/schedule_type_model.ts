@@ -1,1 +1,1 @@
-export type ScheduleType = "leave" | "wfh" | "compensation" | "extra";
+export type ScheduleType = "leave" | "wfh" | "halfday" | "compensation" | "extra";
